@@ -1,6 +1,3 @@
-import 'dart:math';
-
-import 'package:asset_catalog/src/stores/theme_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -8,6 +5,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../models/asset_data.dart';
 import '../models/enums/menu_grouping_type.dart';
 import '../models/enums/menu_sorting_type.dart';
+import '../stores/theme_store.dart';
 import '../widgets/asset_card.dart';
 
 class MainPage extends StatefulWidget {
@@ -19,6 +17,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   static const String mainPackage = 'app';
+  static const String allPackage = 'all packages';
   static const List<String> allowedExtension = [
     'jpg',
     'jpeg',
@@ -39,6 +38,8 @@ class _MainPageState extends State<MainPage> {
   MenuGroupingType _selectedGroupingType = MenuGroupingType.package;
   MenuSortingType _selectedSortingType = MenuSortingType.name;
 
+  bool get _isGrouping => _selectedGroupingType != MenuGroupingType.none;
+
   @override
   void initState() {
     super.initState();
@@ -46,51 +47,7 @@ class _MainPageState extends State<MainPage> {
       _loadAssets();
     });
 
-    _searchController.addListener(_search);
-  }
-
-  Widget _buildSideBar() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(32, 32, 0, 32),
-      width: 225,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSizeSlider(),
-          _buildSearchBar(),
-          const SizedBox(height: 24),
-          const Text(
-            'Packages',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _assetDisplayed.keys.length,
-              itemBuilder: (_, i) {
-                final MapEntry<String, List<AssetData>> entry =
-                    _assetDisplayed.entries.toList()[i];
-
-                return TextButton(
-                  onPressed: () {
-                    _itemScrollController.jumpTo(index: i);
-                  },
-                  style: TextButton.styleFrom(
-                    alignment: Alignment.centerLeft,
-                  ),
-                  child: Text(
-                    '${entry.key} (${entry.value.length})',
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+    _searchController.addListener(_manageData);
   }
 
   @override
@@ -114,23 +71,10 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSideBar(),
-          Expanded(
-            child: ScrollablePositionedList.separated(
-              itemScrollController: _itemScrollController,
-              padding: const EdgeInsets.all(32),
-              itemCount: _assetDisplayed.entries.length,
-              itemBuilder: (_, i) {
-                return _buildPackageItems(
-                  _assetDisplayed.entries.toList()[i],
-                );
-              },
-              separatorBuilder: (_, i) {
-                return const Divider(height: 20);
-              },
-            ),
-          ),
+          _buildBody(),
         ],
       ),
     );
@@ -140,6 +84,108 @@ class _MainPageState extends State<MainPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Widget _buildBody() {
+    if (_isGrouping) {
+      return Expanded(
+        child: ScrollablePositionedList.builder(
+          itemScrollController: _itemScrollController,
+          padding: const EdgeInsets.all(32),
+          itemCount: _assetDisplayed.entries.length,
+          itemBuilder: (_, i) {
+            return _buildPackageItems(
+              _assetDisplayed.entries.toList()[i],
+            );
+          },
+        ),
+      );
+    }
+
+    final List<AssetData> ungroupedData = _assetDisplayed[allPackage] ?? [];
+
+    return Expanded(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: ungroupedData
+              .map(
+                (x) => AssetCard(
+                  data: x,
+                  itemSize: _itemSize,
+                  isShowPackageName: true,
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSideBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(32, 32, 0, 32),
+      width: 225,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSizeSlider(),
+          _buildSearchBar(),
+          _buildPackagesLink(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPackagesLink() {
+    if (!_isGrouping) {
+      return const SizedBox.shrink();
+    }
+
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 24),
+          const Text(
+            'Packages',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _assetDisplayed.keys.length,
+              shrinkWrap: true,
+              itemBuilder: (_, i) {
+                final MapEntry<String, List<AssetData>> entry =
+                    _assetDisplayed.entries.toList()[i];
+
+                if (entry.value.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return TextButton(
+                  onPressed: () {
+                    _itemScrollController.jumpTo(index: i);
+                  },
+                  style: TextButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                  ),
+                  child: Text(
+                    '${entry.key} (${entry.value.length})',
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSortMenu() {
@@ -161,7 +207,7 @@ class _MainPageState extends State<MainPage> {
         setState(() {
           _selectedSortingType = value;
         });
-        // TODO: re-sorting
+        _manageData();
       },
       icon: const Icon(Icons.sort),
       tooltip: 'Sort by',
@@ -187,7 +233,7 @@ class _MainPageState extends State<MainPage> {
         setState(() {
           _selectedGroupingType = value;
         });
-        // TODO: re-grouping
+        _manageData();
       },
       icon: const Icon(Icons.window),
       tooltip: 'Use group',
@@ -280,6 +326,11 @@ class _MainPageState extends State<MainPage> {
   Widget _buildPackageItems(MapEntry<String, List<AssetData>> entry) {
     final String packageName = entry.key;
     final List<AssetData> items = entry.value;
+
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -304,6 +355,7 @@ class _MainPageState extends State<MainPage> {
               )
               .toList(),
         ),
+        const Divider(height: 20),
       ],
     );
   }
@@ -314,6 +366,8 @@ class _MainPageState extends State<MainPage> {
     final List<String> assetsList =
         assetManifest.listAssets().where(_validateAsset).toList();
 
+    _assetAll.putIfAbsent(allPackage, () => []);
+
     for (String item in assetsList) {
       final int bytes = (await rootBundle.load(item)).lengthInBytes;
 
@@ -322,64 +376,68 @@ class _MainPageState extends State<MainPage> {
         _assetAll.putIfAbsent(packageName, () => []);
 
         if (item.contains('packages/$packageName')) {
-          _assetAll[packageName] = [
-            ...?_assetAll[packageName],
-            AssetData(
-              path: item,
-              size: _getFileSizeString(bytes: bytes),
-            ),
-          ];
+          final AssetData data = AssetData(
+            path: item,
+            size: bytes,
+            package: packageName,
+          );
+          _assetAll[packageName] = [...?_assetAll[packageName], data];
+          _assetAll[allPackage] = [...?_assetAll[allPackage], data];
         }
         continue;
       }
 
       // app module
       _assetAll.putIfAbsent(mainPackage, () => []);
-      _assetAll[mainPackage] = [
-        ...?_assetAll[mainPackage],
-        AssetData(
-          path: item,
-          size: _getFileSizeString(bytes: bytes),
-        ),
-      ];
+      final AssetData data = AssetData(
+        path: item,
+        size: bytes,
+        package: mainPackage,
+      );
+      _assetAll[mainPackage] = [...?_assetAll[mainPackage], data];
+      _assetAll[allPackage] = [...?_assetAll[allPackage], data];
     }
 
-    _assetDisplayed = Map.from(_assetAll);
-    setState(() {});
+    _manageData();
   }
 
-  void _search() {
-    final String query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) {
-      setState(() {
-        _assetDisplayed = Map.from(_assetAll);
-      });
-      return;
-    }
+  void _manageData() {
+    _assetDisplayed = {};
 
-    _assetDisplayed.clear();
+    final String query =
+        _searchController.text.trim().toLowerCase().replaceAll('_', ' ');
 
-    for (MapEntry entry in _assetAll.entries) {
-      final List<AssetData> filteredItems = [];
+    for (MapEntry<String, List<AssetData>> entry in _assetAll.entries) {
+      List<AssetData> value = List.from(entry.value);
 
-      for (AssetData item in entry.value) {
-        final String itemName = item.path.split('/').last;
-        if (itemName.contains(query)) {
-          filteredItems.add(item);
-        }
+      // query
+      if (query.isNotEmpty) {
+        value.retainWhere(
+          (e) => e.fileName.replaceAll('_', ' ').contains(query),
+        );
       }
 
-      if (filteredItems.isNotEmpty) {
-        _assetDisplayed[entry.key] = filteredItems;
+      // sorting
+      if (_selectedSortingType == MenuSortingType.size) {
+        value.sort((a, b) => a.size.compareTo(b.size));
+      } else if (_selectedSortingType == MenuSortingType.name) {
+        value.sort((a, b) => a.fileName.compareTo(b.fileName));
       }
+
+      _assetDisplayed[entry.key] = value;
     }
+
+    // grouping
+    if (_isGrouping) {
+      _assetDisplayed.remove(allPackage);
+    }
+
     setState(() {});
   }
 
   void _clearSearch() {
     _searchController.clear();
-    _assetDisplayed = Map.from(_assetAll);
-    setState(() {});
+    _manageData();
   }
 
   bool _validateAsset(String value) {
@@ -389,19 +447,5 @@ class _MainPageState extends State<MainPage> {
     }
 
     return false;
-  }
-
-  String _getFileSizeString({
-    required int bytes,
-    int decimals = 2,
-  }) {
-    const suffixes = ["b", "kb", "mb", "gb", "tb"];
-    final int i = (log(bytes) / log(1024)).floor();
-
-    final double result = (bytes / pow(1024, i));
-    final String resultString =
-        result.toStringAsFixed(result % 1 == 0 ? 0 : decimals);
-
-    return '$resultString ${suffixes[i]}';
   }
 }
