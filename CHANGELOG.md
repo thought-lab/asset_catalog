@@ -1,3 +1,7 @@
+## 0.2.1
+
+fix readme
+
 ## 0.2.0
 
 - add sorting menu by size and file name
