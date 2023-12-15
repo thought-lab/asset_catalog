@@ -1,7 +1,7 @@
 Asset documentation tools for flutter projects
 
 <p align="center">
-  <img src="https://github.com/thought-lab/asset_catalog/blob/v0.2.0-meta/resources/ss_example_light_v0.2.0.png?raw=true" alt="light screenshot" width="75%" />
+  <img src="https://github.com/thought-lab/asset_catalog/blob/main/resources/ss_example_light_v0.2.0.png?raw=true" alt="light screenshot" width="75%" />
 </p>
 
 ## Usage
@@ -13,7 +13,7 @@ Add `asset_catalog` as `dev_depencency` on main/app package
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  asset_catalog: ^0.1.0
+  asset_catalog: any
 ```
 
 Create file `tools/asset_catalog.dart` with code below as the app entry point

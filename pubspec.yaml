@@ -1,6 +1,6 @@
 name: asset_catalog
 description: asset documentation tools for flutter projects
-version: 0.2.0
+version: 0.2.1
 homepage: https://github.com/thought-lab
 repository: https://github.com/thought-lab/asset_catalog
 issue_tracker: https://github.com/thought-lab/asset_catalog/issues
