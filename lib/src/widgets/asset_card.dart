@@ -6,11 +6,13 @@ import '../models/asset_data.dart';
 class AssetCard extends StatelessWidget {
   final AssetData data;
   final double itemSize;
+  final bool isShowPackageName;
 
   const AssetCard({
     super.key,
     required this.data,
     required this.itemSize,
+    this.isShowPackageName = false,
   });
 
   @override
@@ -40,6 +42,7 @@ class AssetCard extends StatelessWidget {
             child: child,
           ),
           const SizedBox(height: 12),
+          _buildPackageLabel(),
           SelectableText(
             name,
             maxLines: 1,
@@ -51,6 +54,17 @@ class AssetCard extends StatelessWidget {
           Text('(${data.size})'),
         ],
       ),
+    );
+  }
+
+  Widget _buildPackageLabel() {
+    if (!isShowPackageName) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Text('${data.package}/'),
     );
   }
 }
