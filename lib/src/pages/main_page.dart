@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../models/asset_data.dart';
+import '../models/enums/menu_grouping_type.dart';
+import '../models/enums/menu_sorting_type.dart';
 import '../widgets/asset_card.dart';
 
 class MainPage extends StatefulWidget {
@@ -34,6 +36,8 @@ class _MainPageState extends State<MainPage> {
   final Map<String, List<AssetData>> _assetAll = {};
   Map<String, List<AssetData>> _assetDisplayed = {};
   double _itemSize = 250;
+  MenuGroupingType _selectedGroupingType = MenuGroupingType.package;
+  MenuSortingType _selectedSortingType = MenuSortingType.name;
 
   @override
   void initState() {
@@ -103,7 +107,10 @@ class _MainPageState extends State<MainPage> {
         ),
         centerTitle: false,
         actions: [
+          _buildSortMenu(),
+          _buildGroupMenu(),
           _buildThemeSwitcher(),
+          const SizedBox(width: 24),
         ],
       ),
       body: Row(
@@ -135,6 +142,58 @@ class _MainPageState extends State<MainPage> {
     super.dispose();
   }
 
+  Widget _buildSortMenu() {
+    return PopupMenuButton(
+      splashRadius: 20,
+      padding: const EdgeInsets.all(8),
+      initialValue: _selectedSortingType,
+      itemBuilder: (BuildContext context) {
+        return MenuSortingType.values
+            .map(
+              (e) => PopupMenuItem<MenuSortingType>(
+                value: e,
+                child: Text(e.getDisplayedValue),
+              ),
+            )
+            .toList();
+      },
+      onSelected: (MenuSortingType value) {
+        setState(() {
+          _selectedSortingType = value;
+        });
+        // TODO: re-sorting
+      },
+      icon: const Icon(Icons.sort),
+      tooltip: 'Sort by',
+    );
+  }
+
+  Widget _buildGroupMenu() {
+    return PopupMenuButton(
+      splashRadius: 20,
+      padding: const EdgeInsets.all(8),
+      initialValue: _selectedGroupingType,
+      itemBuilder: (BuildContext context) {
+        return MenuGroupingType.values
+            .map(
+              (e) => PopupMenuItem<MenuGroupingType>(
+                value: e,
+                child: Text(e.getDisplayedValue),
+              ),
+            )
+            .toList();
+      },
+      onSelected: (MenuGroupingType value) {
+        setState(() {
+          _selectedGroupingType = value;
+        });
+        // TODO: re-grouping
+      },
+      icon: const Icon(Icons.window),
+      tooltip: 'Use group',
+    );
+  }
+
   _buildThemeSwitcher() {
     return ValueListenableBuilder<ThemeData?>(
       valueListenable:
@@ -143,13 +202,15 @@ class _MainPageState extends State<MainPage> {
         final bool isDarkMode = theme == ThemeData.dark();
 
         return IconButton(
-          padding: const EdgeInsets.fromLTRB(8, 8, 32, 8),
+          splashRadius: 20,
+          padding: const EdgeInsets.all(8),
           onPressed: () {
             ThemeStore.of(context)?.toogleTheme();
           },
           icon: Icon(
             isDarkMode ? Icons.nightlight : Icons.sunny,
           ),
+          tooltip: 'Change theme',
         );
       },
     );
