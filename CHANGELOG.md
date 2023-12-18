@@ -1,3 +1,7 @@
+## 0.3.1
+
+fix readme
+
 ## 0.3.0
 
 display resolution for bitmap images
