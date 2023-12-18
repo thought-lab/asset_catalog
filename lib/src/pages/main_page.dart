@@ -369,7 +369,16 @@ class _MainPageState extends State<MainPage> {
     _assetAll.putIfAbsent(allPackage, () => []);
 
     for (String item in assetsList) {
-      final int bytes = (await rootBundle.load(item)).lengthInBytes;
+      final ByteData byteData = await rootBundle.load(item);
+      final int bytes = byteData.lengthInBytes;
+
+      String res = '';
+      if (!item.endsWith('.svg')) {
+        final uiImage = await decodeImageFromList(
+          byteData.buffer.asUint8List(),
+        );
+        res = '${uiImage.width}x${uiImage.height} px';
+      }
 
       if (item.startsWith('packages')) {
         final String packageName = item.split('/')[1];
@@ -380,6 +389,7 @@ class _MainPageState extends State<MainPage> {
             path: item,
             size: bytes,
             package: packageName,
+            resolution: res,
           );
           _assetAll[packageName] = [...?_assetAll[packageName], data];
           _assetAll[allPackage] = [...?_assetAll[allPackage], data];
@@ -393,6 +403,7 @@ class _MainPageState extends State<MainPage> {
         path: item,
         size: bytes,
         package: mainPackage,
+        resolution: res,
       );
       _assetAll[mainPackage] = [...?_assetAll[mainPackage], data];
       _assetAll[allPackage] = [...?_assetAll[allPackage], data];

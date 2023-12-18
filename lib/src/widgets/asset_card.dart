@@ -18,12 +18,15 @@ class AssetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String name = data.fileName;
+    String desc = '(${data.sizeDisplayed})';
+
     late final Widget child;
 
     if (name.endsWith('.svg')) {
       child = SvgPicture.asset(data.path);
     } else {
       child = Image.asset(data.path);
+      desc = '${data.resolution} $desc';
     }
 
     return Container(
@@ -51,7 +54,10 @@ class AssetCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text('(${data.sizeDisplayed})'),
+          Text(
+            desc,
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

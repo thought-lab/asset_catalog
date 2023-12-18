@@ -1,7 +1,7 @@
 Asset documentation tools for flutter projects
 
 <p align="center">
-  <img src="https://github.com/thought-lab/asset_catalog/blob/main/resources/ss_example_light_v0.2.0.png?raw=true" alt="light screenshot" width="75%" />
+  <img src="./resources/ss_example_light_v0.3.0.png?raw=true" alt="light screenshot" width="75%" />
 </p>
 
 ## Usage
