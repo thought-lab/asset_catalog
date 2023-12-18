@@ -4,11 +4,13 @@ class AssetData {
   final String path;
   final int size;
   final String package;
+  final String resolution;
 
   const AssetData({
     required this.path,
     required this.size,
     required this.package,
+    required this.resolution,
   });
 
   String get sizeDisplayed => _getFileSizeString(bytes: size);
